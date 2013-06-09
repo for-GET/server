@@ -2,11 +2,11 @@
 
 [HyperREST](http://hyperrest.com) Server is a HTTP server on top NodeJS native HTTP server, using [HyperREST Machine](https://github.com/andreineculau/hyperrest-machine).
 
-The interface is similar to [connect](https://github.com/senchalabs/connect)/[express](https://github.com/visionmedia/express). A separate middleware can also be exposed, but the compatibility is not the utmost priority.
-
 [HyperREST](http://hyperrest.com) Machine is a NodeJS implementation of the [HTTP decision diagram v4](https://github.com/andreineculau/http-decision-diagram/tree/master/v4).
 
 In short, [I'm eating my own dog food](http://en.wikipedia.org/wiki/Eating_your_own_dog_food).
+
+*Note* The interface of the HyperREST Server is similar to [connect](https://github.com/senchalabs/connect)/[express](https://github.com/visionmedia/express), but the compatibility these is not the utmost priority, nor goal.
 
 
 ## Status
