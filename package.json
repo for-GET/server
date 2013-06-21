@@ -1,6 +1,6 @@
 {
   "name": "hyperrest-server",
-  "description": "HyperREST Server implementing the HTTP decision diagram as a express/connect middleware",
+  "description": "HyperREST Server is a HTTP server on top NodeJS native HTTP server implementing HyperREST Machine",
   "keywords": [
     "node",
     "nodejs",
