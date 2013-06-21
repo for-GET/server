@@ -1,8 +1,8 @@
 define = require('amdefine')(module)  if typeof define isnt 'function'
 define [
-  'otw/like/NodeJS/Url'
+  'otw/like/NodeJS/url'
 ], (
-  Url
+  url
 ) ->
   "use strict"
 
@@ -18,7 +18,7 @@ define [
       hostname = req.headers.host.split(':')[0]
       port = req.app.settings?.port or req.port or '80'
       uri = protocol + '://' + hostname + ':' + port + req.url
-    uri = Url.parse uri, false, true
+    uri = url.parse uri, false, true
 
     {
       source: req.originalUrl
