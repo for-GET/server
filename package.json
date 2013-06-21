@@ -34,7 +34,8 @@
   "dependencies": {
     "amdefine": "~0.0.4",
     "otw": "git://github.com/andreineculau/otw.git",
-    "know-your-http-well": "0.0.1"
+    "know-your-http-well": "0.0.1",
+    "hyperrest-machine": "git://github.com/andreineculau/hyperrest-machine.git"
   },
   "devDependencies": {
     "chai": "~1.7.0",
