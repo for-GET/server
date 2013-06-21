@@ -1,4 +1,4 @@
-# hyperrest-server
+# HyperREST Server
 
 [HyperREST](http://hyperrest.com) Server is a HTTP server on top NodeJS native HTTP server, using [HyperREST Machine](https://github.com/andreineculau/hyperrest-machine).
 
@@ -49,4 +49,4 @@ make sample
 
 ## License
 
-MIT
+[Apache 2.0](LICENSE)
