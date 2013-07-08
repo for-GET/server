@@ -15,9 +15,13 @@ define [
         protocol = 'https'
       else
         protocol = req.headers['x-forwarded-proto'] or 'http'
-      hostname = req.headers.host.split(':')[0]
-      port = req.app.settings?.port or req.port or '80'
-      uri = protocol + '://' + hostname + ':' + port + req.url
+      [hostname, port] = req.headers.host.split ':'
+      unless port
+        switch protocol
+          when 'http' then port = '80'
+          when 'https' then port = '443'
+      port = ":#{port}"  if port
+      uri = protocol + '://' + hostname + port + req.url
     uri = url.parse uri, false, true
 
     {

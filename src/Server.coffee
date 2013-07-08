@@ -33,8 +33,8 @@ define [
       @
 
 
-    handle: (req, res, port) =>
-      @_patchReqRes req, res, port
+    handle: (req, res) =>
+      @_patchReqRes req, res
       for {route, keys, handler} in @stack
         match = route.exec req.url
         continue  if match is null
@@ -47,19 +47,17 @@ define [
 
 
     listen: () ->
-      [port] = arguments
       server = http.createServer (req, res) =>
-        @handle req, res, port
+        @handle req, res
       server.listen.apply server, arguments
 
 
-    _patchReqRes: (req, res, port) ->
+    _patchReqRes: (req, res) ->
       @_ClientRequest.patchNative req
       @_ServerResponse.patchNative res
       req.app = res.app = @
       req.res = res
       res.req = req
-      req.port = port
 
 
     ###

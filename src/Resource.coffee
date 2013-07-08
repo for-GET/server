@@ -19,16 +19,26 @@ define [
 
 
     constructor: (req, res) ->
-      @operation = {
+      uri = helpers.reqToURI req
+      @transaction = {
         _req: req
         _res: res
-        method: helpers.reqToMethod req
-        uri: helpers.reqToURI req
-        headers: req.headers
-        representation: req.body
-        h: {}
+        request:
+          method: helpers.reqToMethod req
+          scheme: uri.scheme
+          host:
+            source: req.headers.host
+            hostname: uri.host
+            port: uri.port
+          target:
+            source: req.url
+            path: uri.path
+            query: uri.query
+          headers: req.headers
+          representation: req.body
+          h: {}
         response:
-          statusCode: undefined
+          status: undefined
           headers: res._headers
           representation: undefined
           h: {}
@@ -37,5 +47,10 @@ define [
             language: undefined
             charset: undefined
             encoding: undefined
+        error:
+          describedBy: undefined
+          supportId: undefined
+          title: undefined
+          detail: undefined
       }
-      super @operation
+      super @transaction
