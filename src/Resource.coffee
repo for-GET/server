@@ -24,6 +24,7 @@ define [
         _req: req
         _res: res
         request:
+          version: req.httpVersion
           method: helpers.reqToMethod req
           scheme: uri.scheme
           host:
