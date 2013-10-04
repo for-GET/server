@@ -1,7 +1,7 @@
 define = require('amdefine')(module)  if typeof define isnt 'function'
 define [
   'querystring'
-  'hyperrest-machine'
+  'httpdd-machine'
   './helpers'
 ], (
   QueryString
@@ -24,6 +24,7 @@ define [
         _req: req
         _res: res
         request:
+          protocol: 'HTTP'
           version: req.httpVersion
           method: helpers.reqToMethod req
           scheme: uri.scheme
@@ -53,5 +54,8 @@ define [
           supportId: undefined
           title: undefined
           detail: undefined
+        log:
+          transitions: []
+          callbacks: []
       }
       super @transaction
