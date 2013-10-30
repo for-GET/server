@@ -5,4 +5,4 @@
 index = require '../'
 
 
-describe 'index', () ->
+describe 'index', () -> undefined
