@@ -1,21 +1,20 @@
 {
-  "name": "hyperrest-server",
-  "description": "HyperREST Server is a HTTP server on top NodeJS native HTTP server implementing HyperREST Machine",
+  "name": "for-get-server",
+  "description": "Reference implementation of an HTTP server running the for-GET Machine",
   "keywords": [
-    "node",
-    "nodejs",
     "connect",
     "express",
     "middleware",
     "webmachine",
-    "HTTP",
+    "http",
     "decision",
-    "diagram"
+    "diagram",
+    "fsm"
   ],
   "version": "0.0.1",
   "repository": {
     "type": "git",
-    "url": "git://github.com/andreineculau/hyperrest-server.git"
+    "url": "git://github.com/for-GET/machine-server.git"
   },
   "licenses": [
     {
@@ -33,8 +32,11 @@
   "dependencies": {
     "amdefine": "~0.0.4",
     "otw": "git://github.com/andreineculau/otw.git",
-    "know-your-http-well": "0.0.1",
-    "httpdd-machine": "git://github.com/for-GET/machine.git"
+    "know-your-http-well": "~0.1.2",
+    "for-get-machine": "git://github.com/for-GET/machine.git"
+  },
+  "optionalDependencies": {
+    "coffee-script": "~1.6.3"
   },
   "devDependencies": {
     "chai": "~1.7.2",
@@ -47,7 +49,8 @@
   },
   "publishConfig": {
     "bin": {
-      "hyperrest-server": "bin/server.js"
-    }
+      "for-get-machine-server": "bin/server.js"
+    },
+    "optionalDependencies": {}
   }
 }

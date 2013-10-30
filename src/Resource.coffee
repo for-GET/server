@@ -1,7 +1,7 @@
 define = require('amdefine')(module)  if typeof define isnt 'function'
 define [
   'querystring'
-  'httpdd-machine'
+  'for-get-machine'
   './helpers'
 ], (
   QueryString
