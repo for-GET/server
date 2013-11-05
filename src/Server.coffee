@@ -1,24 +1,33 @@
 define = require('amdefine')(module)  if typeof define isnt 'function'
 define [
-  'http'
-  './ClientRequest'
-  './ServerResponse'
+  #'api-pegjs'
+  'net'
+  './Transaction'
 ], (
-  http
-  ClientRequest
-  ServerResponse
+  #api
+  net
+  Transaction
 ) ->
   "use strict"
 
   #
-  class Server
-    _ClientRequest: ClientRequest
-    _ServerResponse: ServerResponse
+  class Server extends net.Server
     stack: undefined
+
+    _connectionListener: (socket) ->
+      transaction = new Transaction {socket}
+      transaction.req.on 'route', (target) =>
+        @handle {transaction, target}
+
+    _clientErrorListener: (err, socket) ->
+      console.log 'error'
+      socket.destroy err
 
 
     constructor: () ->
       @stack = []
+      @addListener 'connection', @_connectionListener
+      @addListener 'clientError', @_clientErrorListener
 
 
     use: (route, handler) ->
@@ -33,10 +42,12 @@ define [
       @
 
 
-    handle: (req, res) =>
-      @_patchReqRes req, res
+    handle: ({transaction, target}) =>
+      {req, res} = transaction
+      console.log target
+      return
       for {route, keys, handler} in @stack
-        match = route.exec req.url
+        match = route.exec target
         continue  if match is null
         match.shift()
         kv = {}
@@ -44,12 +55,6 @@ define [
         req.keys = kv
         handler req, res
         return
-
-
-    listen: () ->
-      server = http.createServer (req, res) =>
-        @handle req, res
-      server.listen.apply server, arguments
 
 
     _patchReqRes: (req, res) ->
