@@ -19,9 +19,7 @@ define [
       @socket = socket
       @request = new IncomingMessage {socket}
       @response = new OutgoingMessage {socket}
-      @request._response = @response
       @request._transaction = @
-      @response._request = @request
       @response._transaction = @
 
 
