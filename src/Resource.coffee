@@ -1,10 +1,8 @@
 define = require('amdefine')(module)  if typeof define isnt 'function'
 define [
   'for-get-machine'
-  './helpers'
 ], (
   machine
-  helpers
 ) ->
   "use strict"
 

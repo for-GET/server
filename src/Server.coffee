@@ -14,10 +14,12 @@ define [
   class Server extends net.Server
     stack: undefined
 
+
     _connectionListener: (socket) ->
       transaction = new Transaction {socket}
-      transaction.req.on 'route', (target) =>
-        @handle {transaction, target}
+      transaction.request.on 'line', () =>
+        @handle {transaction}
+
 
     _clientErrorListener: (err, socket) ->
       console.log 'error'
@@ -39,15 +41,16 @@ define [
         handler
       }
 
-      @
 
-
-    handle: ({transaction, target}) =>
-      {req, res} = transaction
-      console.log target
+    handle: ({transaction}) =>
+      {request, response} = transaction
+      # Example
+      response.writeHead {headers: {'Content-Length': '3'}}
+      response.end '123'
       return
+
       for {route, keys, handler} in @stack
-        match = route.exec target
+        match = route.exec transaction.request.target
         continue  if match is null
         match.shift()
         kv = {}
