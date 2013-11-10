@@ -11,16 +11,20 @@ define [
   "use strict"
 
   Request = api['http/Request']
+  CRLF = '\r\n'
 
   # based on https://github.com/isaacs/readable-stream
   #
   class IncomingMessage extends Readable
-    _head: ''
+    _receiving: undefined
+    _buffer: ''
+    _line: ''
+    _headers: ''
     socket: undefined
-    maxSize: 0 +      # http://stackoverflow.com/questions/3326210/can-http-headers-be-too-big-for-browsers
-      1024 * 2 +      # request-line
-      1024 * 256 +    # headers
-      1024 * 1024 * 2 # body
+    # http://stackoverflow.com/questions/3326210/can-http-headers-be-too-big-for-browsers
+    maxSizeLine: 1024 * 2
+    maxSizeHeaders: 1024 * 256
+    maxSizeBody: 1024 * 1024 * 2
     protocol: 'HTTP'
     version: '1.1'
     method: undefined
@@ -35,6 +39,7 @@ define [
     constructor: ({socket}) ->
       super {encoding: 'ascii'}
       @socket = socket
+      @_receiving = ['line', CRLF]
       return  unless @socket?
       @socket.setEncoding 'ascii'
       @socket.on 'end', () =>
@@ -49,49 +54,47 @@ define [
 
     _read: () ->
       # FIXME implement chunked encoding
-      chunk = @socket.read()
+      chunk = @_buffer + @socket.read()
       return @push ''  unless chunk?
-      return @socket.destroy new Error "Request is larger than #{@maxSize} bytes"   if @socket.bytesRead > @maxSize
-      if @headers?
+      maxSize = @maxSizeLine + @maxSizeHeaders + @maxSizeBody
+      if @socket.bytesRead > maxSize
+        return @socket.destroy new Error "Request body is larger than #{maxSize} bytes"
+      @_buffer = ''
+      if @_receiving[0] is 'body'
         @push chunk
         # FIXME always skipping trailers
       else
-        chunk = @_head + chunk
-        CRLF = '\r\n'
-        suffixRequestLine = CRLF
-        suffixHeaders = CRLF + CRLF
-
-        # separate after request line or after headers
-        _head = ''
-        requestLine = ''
-        headers = ''
-        index = chunk.indexOf suffixRequestLine
-        if index isnt -1
-          _head = requestLine = chunk.substr 0, index
-          chunk = chunk.substr index + suffixRequestLine.length
-          index = chunk.indexOf suffixHeaders
-          if index isnt -1
-            headers = chunk.substr 0, index
-            chunk = chunk.substr index + suffixHeaders.length
-            _head += suffixRequestLine + headers
-          _head += suffixHeaders
-        if _head?
-          request = new Request _head
+        delimiter = @_receiving[1]
+        index = chunk.indexOf delimiter
+        if index is -1
+          @_buffer = chunk
+          return @push ''
+        value = chunk.substr 0, index
+        chunk = chunk.substr index + delimiter.length
+        if @_receiving[0] is 'line'
+          @_line = value
+          request = new Request "#{@_line}#{CRLF}#{CRLF}"
           @[prop] = request[prop]  for prop in [
             'version'
             'method'
             'scheme'
             'host'
             'target'
+            'headers'
           ]
-          @emit 'line'  unless @headers
-          if headers?
-            @headers = request.headers
-            @emit 'headers', @headers
-            @push chunk
+          @emit 'line'
+          @_receiving = ['headers', CRLF + CRLF]
         else
-          @_head += chunk
-          @push ''
+          @_headers = value
+          if value?.length
+            request = new Request "#{@_line}#{CRLF}#{@_headers}#{CRLF}#{CRLF}"
+            @headers = request.headers
+          @emit 'headers'
+          @_receiving = ['body']
+        @_buffer = chunk
+        @push ''
+        if @_buffer?.length
+          process.nextTick () => @read 0
 
 
     get: (name, types) ->
