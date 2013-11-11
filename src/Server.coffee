@@ -45,8 +45,11 @@ define [
     handle: ({transaction}) =>
       {request, response} = transaction
       # Example
-      response.writeHead {headers: {'Content-Length': '3'}}
-      response.end '123'
+      request.on 'readable', () ->
+
+      s = 'ß€'
+      response.writeHead {headers: {'Content-Length': Buffer.byteLength s, 'utf-8'}}
+      response.end s
       return
 
       for {route, keys, handler} in @stack

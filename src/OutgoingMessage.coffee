@@ -14,7 +14,8 @@ define [
 
   #
   class OutgoingMessage extends Writable
-    _head: ''
+    _line: ''
+    _headers: ''
     socket: undefined
     protocol: 'HTTP'
     version: '1.1'
@@ -22,11 +23,6 @@ define [
     headers: undefined
     representation: undefined
     trailers: undefined
-
-
-    Object.defineProperty @::, '_headersSent',
-      get: () ->
-        @_head.length > 0
 
 
     constructor: ({socket}) ->
@@ -88,8 +84,11 @@ define [
         'status_code'
         'headers'
       ]
-      @_head = response.toString {hideBody: true}
-      @socket.write @_head, 'ascii'
+      head = response.toString {hideBody: true}
+      headersIndex = head.indexOf '\r\n'
+      @_line = head.slice 0, headersIndex
+      @_headers = head.slice headersIndex + 1
+      @socket.write head
 
 
     _write: (data, callback) ->

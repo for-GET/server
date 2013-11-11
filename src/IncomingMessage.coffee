@@ -18,13 +18,13 @@ define [
   class IncomingMessage extends Readable
     _receiving: undefined
     _buffer: ''
-    _line: ''
-    _headers: ''
+    _line: undefined
+    _headers: undefined
     socket: undefined
     # http://stackoverflow.com/questions/3326210/can-http-headers-be-too-big-for-browsers
-    maxSizeLine: 1024 * 2
-    maxSizeHeaders: 1024 * 256
-    maxSizeBody: 1024 * 1024 * 2
+    _maxSizeLine: 1024 * 2
+    _maxSizeHeaders: 1024 * 256
+    _maxSizeBody: 1024 * 1024 * 2
     protocol: 'HTTP'
     version: '1.1'
     method: undefined
@@ -37,11 +37,10 @@ define [
 
 
     constructor: ({socket}) ->
-      super {encoding: 'ascii'}
+      super()
       @socket = socket
       @_receiving = ['line', CRLF]
       return  unless @socket?
-      @socket.setEncoding 'ascii'
       @socket.on 'end', () =>
         @push null
       @socket.on 'readable', () =>
@@ -54,9 +53,14 @@ define [
 
     _read: () ->
       # FIXME implement chunked encoding
-      chunk = @_buffer + @socket.read()
-      return @push ''  unless chunk?
-      maxSize = @maxSizeLine + @maxSizeHeaders + @maxSizeBody
+      chunk = originalChunk = @socket.read()
+      chunk ?= ''
+      if @_buffer.length
+        chunk = @_buffer + chunk
+        return @push ''  unless chunk?
+      else
+        return @push originalChunk  unless chunk?
+      maxSize = @_maxSizeLine + @_maxSizeHeaders + @_maxSizeBody
       if @socket.bytesRead > maxSize
         return @socket.destroy new Error "Request body is larger than #{maxSize} bytes"
       @_buffer = ''
