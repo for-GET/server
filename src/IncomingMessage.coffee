@@ -4,8 +4,8 @@ define [
   'stream'
   'api-pegjs'
 ], (
-  {_}
-  {Readable}
+  {_, noop, BufferIndexOf}
+  {Transform}
   api
 ) ->
   "use strict"
@@ -15,16 +15,16 @@ define [
 
   # based on https://github.com/isaacs/readable-stream
   #
-  class IncomingMessage extends Readable
+  class IncomingMessage extends Transform
     _receiving: undefined
     _buffer: ''
-    _line: undefined
-    _headers: undefined
-    socket: undefined
+    _rawLine: undefined
+    _rawHeaders: undefined
     # http://stackoverflow.com/questions/3326210/can-http-headers-be-too-big-for-browsers
     _maxSizeLine: 1024 * 2
     _maxSizeHeaders: 1024 * 256
     _maxSizeBody: 1024 * 1024 * 2
+    _socket: undefined
     protocol: 'HTTP'
     version: '1.1'
     method: undefined
@@ -38,46 +38,44 @@ define [
 
     constructor: ({socket}) ->
       super()
-      @socket = socket
       @_receiving = ['line', CRLF]
-      return  unless @socket?
-      @socket.on 'end', () =>
-        @push null
-      @socket.on 'readable', () =>
-        @read 0
+      @_buffer = new Buffer 0
+      @_socket = socket
+      @_socket?.pipe @
 
 
     destroy: (error) ->
-      @socket.destroy error  if @socket?
+      @_socket?.destroy error
 
 
-    _read: () ->
+    _transform: (chunk, encoding, next = noop) ->
       # FIXME implement chunked encoding
-      chunk = originalChunk = @socket.read()
-      chunk ?= ''
-      if @_buffer.length
-        chunk = @_buffer + chunk
-        return @push ''  unless chunk?
-      else
-        return @push originalChunk  unless chunk?
-      maxSize = @_maxSizeLine + @_maxSizeHeaders + @_maxSizeBody
-      if @socket.bytesRead > maxSize
-        return @socket.destroy new Error "Request body is larger than #{maxSize} bytes"
-      @_buffer = ''
-      if @_receiving[0] is 'body'
+      unless chunk?.length > 1
         @push chunk
-        # FIXME always skipping trailers
-      else
-        delimiter = @_receiving[1]
-        index = chunk.indexOf delimiter
+        return next()
+      maxSize = @_maxSizeLine + @_maxSizeHeaders + @_maxSizeBody
+      if @_socket.bytesRead > maxSize
+        return @destroy new Error "Request is larger than #{maxSize} bytes"
+
+      loop
+        [stage, delimiter] = @_receiving
+        if stage is 'body'
+          @push chunk
+          return next()
+          # FIXME always skipping trailers
+
+        chunk = Buffer.concat [@_buffer, chunk], @_buffer.length + chunk.length
+        index = BufferIndexOf.call chunk, delimiter
         if index is -1
           @_buffer = chunk
-          return @push ''
-        value = chunk.substr 0, index
-        chunk = chunk.substr index + delimiter.length
-        if @_receiving[0] is 'line'
-          @_line = value
-          request = new Request "#{@_line}#{CRLF}#{CRLF}"
+          @push new Buffer ''
+          return next()
+        value = chunk.slice(0, index).toString()
+        chunk = chunk.slice index + Buffer.byteLength delimiter
+
+        if stage is 'line'
+          @_rawLine = value
+          request = new Request "#{@_rawLine}#{CRLF}#{CRLF}"
           @[prop] = request[prop]  for prop in [
             'version'
             'method'
@@ -85,20 +83,17 @@ define [
             'host'
             'target'
             'headers'
+            'trailers'
           ]
           @emit 'line'
           @_receiving = ['headers', CRLF + CRLF]
         else
-          @_headers = value
+          @_rawHeaders = value
           if value?.length
-            request = new Request "#{@_line}#{CRLF}#{@_headers}#{CRLF}#{CRLF}"
+            request = new Request "#{@_rawLine}#{CRLF}#{@_rawHeaders}#{CRLF}#{CRLF}"
             @headers = request.headers
           @emit 'headers'
           @_receiving = ['body']
-        @_buffer = chunk
-        @push ''
-        if @_buffer?.length
-          process.nextTick () => @read 0
 
 
     get: (name, types) ->

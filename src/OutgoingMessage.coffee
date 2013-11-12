@@ -4,19 +4,20 @@ define [
   'stream'
   'api-pegjs'
 ], (
-  {_}
-  {Writable}
+  {_, noop}
+  {Transform}
   api
 ) ->
   "use strict"
 
   Response = api['http/Response']
+  CRLF = '\r\n'
 
   #
-  class OutgoingMessage extends Writable
-    _line: ''
-    _headers: ''
-    socket: undefined
+  class OutgoingMessage extends Transform
+    _rawLine: ''
+    _rawHeaders: ''
+    _socket: undefined
     protocol: 'HTTP'
     version: '1.1'
     status_code: undefined
@@ -26,15 +27,14 @@ define [
 
 
     constructor: ({socket}) ->
-      super {encoding: 'ascii', decodeStrings: false}
-      @socket = socket
+      super()
+      @_socket = socket
       @headers = []
-      return  unless @socket?
-      @socket.setEncoding 'ascii'
+      @pipe @_socket
 
 
     destroy: (error) ->
-      @socket.destroy error  if @socket?
+      @_socket?.destroy error
 
 
     get: (name) ->
@@ -47,7 +47,7 @@ define [
 
 
     set: (name, value) ->
-      throw new Error 'Cannot set headers are they are sent'  if @_headersSent
+      throw new Error 'Cannot set headers are they are sent'  if @_rawHeaders
       @headers ?= []
       if @headers.length
         name = name.toLowerCase()
@@ -64,12 +64,14 @@ define [
       }
 
 
-    writeHead: (args = {}) ->
+    writeHead: (args = {}, next = noop) ->
       {protocol, version, status_code, headers} = args
-      throw new Error 'Headers are already sent'  if @_headersSent
-      @protocol = protocol  if protocol?
-      @version = version  if version?
-      @status_code = status_code  if status_code?
+      return @emit 'error', new Error 'Headers are already sent'  if @_rawHeaders
+      @[prop] = args[prop]  for prop in [
+        'protocol'
+        'version'
+        'status_code'
+      ]
       if headers?
         @headers ?= []
         for name, value of headers
@@ -85,25 +87,26 @@ define [
         'headers'
       ]
       head = response.toString {hideBody: true}
-      headersIndex = head.indexOf '\r\n'
-      @_line = head.slice 0, headersIndex
-      @_headers = head.slice headersIndex + 1
-      @socket.write head
+      headersIndex = head.indexOf CRLF
+      @_rawLine = head.slice 0, headersIndex
+      @_rawHeaders = head.slice headersIndex + 1
+      @push head
+      next()
 
 
-    _write: (data, callback) ->
+    _transform: (chunk, encoding, next = noop) ->
       # FIXME implement chunked encoding
-      @writeHead()  unless @_headersSent
-      @socket.write data, 'ascii', callback
-
-
-    write: (data, callback) ->
-      super data, 'ascii', callback
+      # FIXME always skipping trailers
+      fun = () =>
+        @push chunk
+        next()
+      if @_rawHeaders
+        fun()
+      else
+        @writeHead null, fun
 
 
     end: (args...) ->
-      @write.apply @, args
-      @write '\r\n', () =>
-        super
-        @socket.end()
-        @emit 'finish'
+      super
+      @_socket.end()
+      @emit 'finish'
