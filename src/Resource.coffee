@@ -1,7 +1,9 @@
 define = require('amdefine')(module)  if typeof define isnt 'function'
 define [
+  './_misc'
   'for-get-machine'
 ], (
+  {_}
   machine
 ) ->
   "use strict"
@@ -10,41 +12,12 @@ define [
   class Resource extends machine.Resource
     @middleware: (Resource = @, FSM = machine.FSM) ->
       (transaction, next) ->
-        resource = new Resource transaction
+        resource = new Resource {transaction}
         new FSM resource
 
 
-    constructor: (req, res) ->
-      uri = helpers.reqToURI req
-      @transaction = {
-        _req: req
-        _res: res
-        request:
-          protocol: 'HTTP'
-          version: req.httpVersion
-          method: helpers.reqToMethod req
-          scheme: uri.scheme
-          host:
-            source: req.headers.host
-            hostname: uri.host
-            port: uri.port
-          target:
-            source: req.url
-            path: uri.path
-            query: uri.query
-          headers: req.headers
-          representation: req.body
-          h: {}
-        response:
-          status: undefined
-          headers: res._headers
-          representation: undefined
-          h: {}
-          chosen:
-            contentType: undefined
-            language: undefined
-            charset: undefined
-            encoding: undefined
+    constructor: ({transaction}) ->
+      _.defaults transaction,
         error:
           describedBy: undefined
           supportId: undefined
@@ -54,4 +27,4 @@ define [
           transitions: []
           callbacks: []
       }
-      super @transaction
+      super

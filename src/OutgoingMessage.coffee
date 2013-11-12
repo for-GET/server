@@ -30,8 +30,8 @@ define [
         @writeHead null, fun
 
 
-    constructor: ({socket}) ->
-      super()
+    constructor: ({socket, transaction}) ->
+      super
       @pipe @_socket
 
 

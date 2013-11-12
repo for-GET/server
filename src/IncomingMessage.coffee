@@ -23,8 +23,6 @@ define [
     _maxSizeHeaders: 1024 * 256
     _maxSizeBody: 1024 * 1024 * 10
     method: undefined
-    scheme: undefined
-    host: undefined
     target: undefined
 
 
@@ -59,11 +57,8 @@ define [
           @[prop] = request[prop]  for prop in [
             'version'
             'method'
-            'scheme'
-            'host'
             'target'
             'headers'
-            'trailers'
           ]
           @emit 'line'
           if chunk.slice(0, 2).toString() is CRLF
@@ -81,7 +76,7 @@ define [
 
 
     constructor: ({socket, transaction}) ->
-      super()
+      super
       @_receiving = ['line', CRLF]
       @_buffer = new Buffer 0
       @_socket?.pipe @

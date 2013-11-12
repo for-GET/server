@@ -17,7 +17,6 @@ define [
     version: '1.1'
     headers: undefined
     representation: undefined
-    trailers: undefined
     h: undefined
 
 
