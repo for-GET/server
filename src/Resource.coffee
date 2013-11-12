@@ -26,5 +26,4 @@ define [
         log:
           transitions: []
           callbacks: []
-      }
       super
