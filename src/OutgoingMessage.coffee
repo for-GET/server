@@ -1,11 +1,11 @@
 define = require('amdefine')(module)  if typeof define isnt 'function'
 define [
   './_misc'
-  'stream'
+  './Message'
   'api-pegjs'
 ], (
   {_, noop}
-  {Transform}
+  Message
   api
 ) ->
   "use strict"
@@ -14,41 +14,29 @@ define [
   CRLF = '\r\n'
 
   #
-  class OutgoingMessage extends Transform
-    _rawLine: ''
-    _rawHeaders: ''
-    _socket: undefined
-    _transaction: undefined
-    protocol: 'HTTP'
-    version: '1.1'
+  class OutgoingMessage extends Message
     status_code: undefined
-    headers: undefined
-    representation: undefined
-    trailers: undefined
+
+
+    _transform: (chunk, encoding, next = noop) ->
+      # FIXME implement chunked encoding
+      # FIXME always skipping trailers
+      fun = () =>
+        @push chunk
+        next()
+      if @_rawHeaders
+        fun()
+      else
+        @writeHead null, fun
 
 
     constructor: ({socket}) ->
       super()
-      @_socket = socket
-      @_transaction = transaction
       @pipe @_socket
 
 
-    destroy: (error) ->
-      @_socket?.destroy error
-
-
-    get: (name) ->
-      return  unless @headers?
-      name = name.toLowerCase()
-      header = _.find @headers, (header) ->
-        header.name.toLowerCase() is name
-      return  unless header?
-      header.value
-
-
-    set: (name, value) ->
-      throw new Error 'Cannot set headers are they are sent'  if @_rawHeaders
+    setHeader: (name, value) ->
+      return @emit 'error', 'Cannot set headers after they are sent'  if @_rawHeaders?.length
       @headers ?= []
       if @headers.length
         name = name.toLowerCase()
@@ -67,7 +55,7 @@ define [
 
     writeHead: (args = {}, next = noop) ->
       {protocol, version, status_code, headers} = args
-      return @emit 'error', new Error 'Headers are already sent'  if @_rawHeaders
+      return @emit 'error', new Error 'Headers are already sent'  if @_rawHeaders?.length
       @[prop] = args[prop]  for prop in [
         'protocol'
         'version'
@@ -93,18 +81,6 @@ define [
       @_rawHeaders = head.slice headersIndex + 1
       @push head
       next()
-
-
-    _transform: (chunk, encoding, next = noop) ->
-      # FIXME implement chunked encoding
-      # FIXME always skipping trailers
-      fun = () =>
-        @push chunk
-        next()
-      if @_rawHeaders
-        fun()
-      else
-        @writeHead null, fun
 
 
     end: (args...) ->
