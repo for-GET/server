@@ -18,6 +18,7 @@ define [
     _rawLine: ''
     _rawHeaders: ''
     _socket: undefined
+    _transaction: undefined
     protocol: 'HTTP'
     version: '1.1'
     status_code: undefined
@@ -29,7 +30,7 @@ define [
     constructor: ({socket}) ->
       super()
       @_socket = socket
-      @headers = []
+      @_transaction = transaction
       @pipe @_socket
 
 

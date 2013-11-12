@@ -17,8 +17,8 @@ define [
 
     constructor: ({socket, @request, @response}) ->
       @_socket = socket
-      @request ?= new IncomingMessage {socket}
-      @response ?= new OutgoingMessage {socket}
+      @request ?= new IncomingMessage {socket, transaction: @}
+      @response ?= new OutgoingMessage {socket, transaction: @}
 
 
     destroy: (error) ->

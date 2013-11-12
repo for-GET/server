@@ -12,37 +12,20 @@ define [
 
   #
   class Server extends net.Server
-    stack: undefined
+    _stack: undefined
 
 
     _connectionListener: (socket) ->
       transaction = new Transaction {socket}
       transaction.request.on 'line', () =>
-        @handle {transaction}
+        @_handleTransaction {transaction}
 
 
     _clientErrorListener: (err, socket) ->
-      console.log 'error'
       socket.destroy err
 
 
-    constructor: () ->
-      @stack = []
-      @addListener 'connection', @_connectionListener
-      @addListener 'clientError', @_clientErrorListener
-
-
-    use: (route, handler) ->
-      keys = []
-      route = @_pathRegExp route, keys
-      @stack.push {
-        route
-        keys
-        handler
-      }
-
-
-    handle: ({transaction}) =>
+    _handleTransaction: ({transaction}) =>
       {request, response} = transaction
       # Example
       request.on 'data', (chunk) ->
@@ -53,23 +36,15 @@ define [
         response.end()
       return
 
-      for {route, keys, handler} in @stack
-        match = route.exec transaction.request.target
+      for {path, keys, handler} in @_stack
+        match = path.exec request.target
         continue  if match is null
         match.shift()
         kv = {}
         kv[name] = match[index]  for {name}, index in keys
-        req.keys = kv
-        handler req, res
+        request.keys = kv
+        handler request, response
         return
-
-
-    _patchReqRes: (req, res) ->
-      @_ClientRequest.patchNative req
-      @_ServerResponse.patchNative res
-      req.app = res.app = @
-      req.res = res
-      res.req = req
 
 
     ###
@@ -99,3 +74,19 @@ define [
         .replace(/([\/.])/g, '\\$1')
         .replace(/\*/g, '(.*)')
       new RegExp '^' + path + '$', (if sensitive then '' else 'i')
+
+
+    constructor: () ->
+      @_stack = []
+      @addListener 'connection', @_connectionListener
+      @addListener 'clientError', @_clientErrorListener
+
+
+    use: (path, handler) ->
+      keys = []
+      path = @_pathRegExp path, keys
+      @_stack.push {
+        path
+        keys
+        handler
+      }
