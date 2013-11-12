@@ -12,6 +12,9 @@ define [
     _
 
 
+    noop: () ->
+
+
     BufferIndexOf: (searchValue, fromIndex = 0) ->
       index = -1
       return index  if fromIndex >= @length
