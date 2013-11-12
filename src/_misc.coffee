@@ -12,7 +12,7 @@ define [
     _
 
 
-    noop: () ->
+    noop: () -> undefined
 
 
     BufferIndexOf: (searchValue, fromIndex = 0) ->
