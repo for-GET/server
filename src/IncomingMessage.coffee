@@ -23,7 +23,7 @@ define [
     # http://stackoverflow.com/questions/3326210/can-http-headers-be-too-big-for-browsers
     _maxSizeLine: 1024 * 2
     _maxSizeHeaders: 1024 * 256
-    _maxSizeBody: 1024 * 1024 * 2
+    _maxSizeBody: 1024 * 1024 * 10
     _socket: undefined
     protocol: 'HTTP'
     version: '1.1'
