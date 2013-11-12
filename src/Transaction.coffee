@@ -10,20 +10,18 @@ define [
 
   #
   class Transaction
-    socket: undefined
+    _socket: undefined
     request: undefined
     response: undefined
 
 
-    constructor: ({socket}) ->
-      @socket = socket
-      @request = new IncomingMessage {socket}
-      @response = new OutgoingMessage {socket}
-      @request._transaction = @
-      @response._transaction = @
+    constructor: ({socket, @request, @response}) ->
+      @_socket = socket
+      @request ?= new IncomingMessage {socket}
+      @response ?= new OutgoingMessage {socket}
 
 
     destroy: (error) ->
       @request.destroy error  if @request?
       @response.destroy error  if @response?
-      @socket.destroy error  if @socket?
+      @_socket.destroy error  if @_socket?
