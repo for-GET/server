@@ -86,7 +86,11 @@ define [
             'trailers'
           ]
           @emit 'line'
-          @_receiving = ['headers', CRLF + CRLF]
+          if chunk.slice(0, 2).toString() is CRLF
+            @emit 'headers'
+            @_receiving = ['body']
+          else
+            @_receiving = ['headers', CRLF + CRLF]
         else
           @_rawHeaders = value
           if value?.length
