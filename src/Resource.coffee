@@ -9,8 +9,8 @@ define [
   #
   class Resource extends machine.Resource
     @middleware: (Resource = @, FSM = machine.FSM) ->
-      (req, res, next) ->
-        resource = new Resource req, res
+      (transaction, next) ->
+        resource = new Resource transaction
         new FSM resource
 
 

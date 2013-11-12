@@ -26,7 +26,7 @@ define [
 
 
     _handleTransaction: ({transaction}) =>
-      {request, response} = transaction
+      {request} = transaction
       for {path, keys, handler} in @_stack
         match = path.exec request.target
         continue  if match is null
@@ -34,8 +34,7 @@ define [
         kv = {}
         kv[name] = match[index]  for {name}, index in keys
         request.keys = kv
-        handler request, response
-        return
+        return handler transaction
 
 
     ###

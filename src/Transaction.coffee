@@ -15,7 +15,7 @@ define [
     response: undefined
 
 
-    constructor: ({socket, @request, @response}) ->
+    constructor: ({socket}) ->
       @_socket = socket
       @request ?= new IncomingMessage {socket, transaction: @}
       @response ?= new OutgoingMessage {socket, transaction: @}
