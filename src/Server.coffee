@@ -27,15 +27,6 @@ define [
 
     _handleTransaction: ({transaction}) =>
       {request, response} = transaction
-      # Example
-      request.on 'data', (chunk) ->
-        s = chunk
-        #s = 'ß€'
-        response.writeHead {headers: {'Content-Length': chunk.length}}
-        response.write chunk
-        response.end()
-      return
-
       for {path, keys, handler} in @_stack
         match = path.exec request.target
         continue  if match is null
