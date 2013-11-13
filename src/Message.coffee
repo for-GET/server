@@ -2,11 +2,15 @@ define = require('amdefine')(module)  if typeof define isnt 'function'
 define [
   './_misc'
   'stream'
+  'readable-stream/transform'
 ], (
   {_}
   {Transform}
+  Transform8
 ) ->
   "use strict"
+
+  Transform ?= Transform8
 
   class Message extends Transform
     _rawLine: undefined

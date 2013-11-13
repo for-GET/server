@@ -34,7 +34,8 @@
     "api-pegjs": "git://github.com/for-GET/api-pegjs.git",
     "otw": "git://github.com/andreineculau/otw.git",
     "know-your-http-well": "~0.1.2",
-    "for-get-machine": "git://github.com/for-GET/machine.git"
+    "for-get-machine": "git://github.com/for-GET/machine.git",
+    "readable-stream": "~1.1.9"
   },
   "optionalDependencies": {
     "coffee-script": "~1.6.3"
