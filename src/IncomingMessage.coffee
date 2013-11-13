@@ -11,6 +11,7 @@ define [
   "use strict"
 
   Request = api['http/Request']
+  headerFactory = api['http/headers/factory']
   CRLF = '\r\n'
 
   # based on https://github.com/isaacs/readable-stream
@@ -58,7 +59,6 @@ define [
             'version'
             'method'
             'target'
-            'headers'
           ]
           @emit 'line'
           if chunk.slice(0, 2).toString() is CRLF
@@ -70,7 +70,8 @@ define [
           @_rawHeaders = value
           if value?.length
             request = new Request "#{@_rawLine}#{CRLF}#{@_rawHeaders}#{CRLF}#{CRLF}"
-            @headers = request.headers
+            for header in request.headers
+              @headers[header.name.toLowerCase()] = headerFactory header.name, header.value
           @emit 'headers'
           @_receiving = ['body']
 

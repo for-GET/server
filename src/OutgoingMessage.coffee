@@ -11,6 +11,7 @@ define [
   "use strict"
 
   Response = api['http/Response']
+  headerFactory = api['http/headers/factory']
   CRLF = '\r\n'
 
   #
@@ -36,26 +37,15 @@ define [
 
 
     setHeader: (name, value) ->
-      return @emit 'error', 'Cannot set headers after they are sent'  if @_rawHeaders?.length
-      @headers ?= []
-      if @headers.length
-        name = name.toLowerCase()
-        header = _.find @headers, (header) ->
-          header.name.toLowerCase() is name
-        if header?
-          header.value = value
-          return
-
-      @headers.push {
-        _type: 'header_field'
-        name
-        value
-      }
+      return @emit 'error', 'Cannot set headers after they are sent'  if @_rawHeaders?
+      nameLC = name.toLowerCase()
+      return nameLC.set value  if _.has @h, nameLC
+      @headers[nameLC] = headerFactory name, value
 
 
     writeHead: (args = {}, next = noop) ->
       {protocol, version, status_code, headers} = args
-      return @emit 'error', new Error 'Headers are already sent'  if @_rawHeaders?.length
+      return @emit 'error', new Error 'Headers are already sent'  if @_rawHeaders?
       @[prop] = args[prop]  for prop in [
         'protocol'
         'version'
