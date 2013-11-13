@@ -34,6 +34,7 @@ define [
     get: (name) ->
       return  unless @headers?.length
       name = name.toLowerCase()
+      return @getHeader(name).toString()  if _.has @h, name
       header = _.find @headers, (header) ->
         header.name.toLowerCase() is name
       return  unless header?
