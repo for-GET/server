@@ -34,7 +34,7 @@ define [
         kv = {}
         kv[name] = match[index]  for {name}, index in keys
         request.keys = kv
-        return handler transaction
+        return handler {transaction}
 
 
     ###

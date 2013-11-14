@@ -25,7 +25,18 @@ define [
       fun = () =>
         @push chunk
         next()
-      if @_rawHeaders
+      if @_rawHeaders?
+        fun()
+      else
+        @writeHead null, fun
+
+
+    _flush: (next = noop) ->
+      fun = () =>
+        @_socket.end()
+        @emit 'finish'
+        next()
+      if @_rawHeaders?
         fun()
       else
         @writeHead null, fun
@@ -33,47 +44,54 @@ define [
 
     constructor: ({socket, transaction}) ->
       super
-      @pipe @_socket
+      @pipe @_socket  if @_socket?
 
 
-    setHeader: (name, value) ->
-      return @emit 'error', 'Cannot set headers after they are sent'  if @_rawHeaders?
+    destroy: (error) ->
+      @unpipe @_socket  if @_socket?
+      super
+
+
+    header: (name, value) ->
+      return super  if value is undefined
+      return @emit 'error', new Error 'Cannot set headers after they are sent'  if @_rawHeaders?
       nameLC = name.toLowerCase()
-      return nameLC.set value  if _.has @h, nameLC
+      return delete @headers[nameLC]  if value is null
+      return @headers[nameLC].set value  if _.has @headers, nameLC
       @headers[nameLC] = headerFactory name, value
+
+
+    content: (tag, value) ->
+      tag = @_expandTag tag
+      if value is undefined
+        return @chosen[tag]
+      else
+        @chosen[tag] = headerFactory tag, value
 
 
     writeHead: (args = {}, next = noop) ->
       {protocol, version, status_code, headers} = args
       return @emit 'error', new Error 'Headers are already sent'  if @_rawHeaders?
-      @[prop] = args[prop]  for prop in [
+      for prop in [
         'protocol'
         'version'
         'status_code'
       ]
+        continue  unless args[prop]?
+        @[prop] = args[prop]
       if headers?
-        @headers ?= []
-        for name, value of headers
-          @headers.push {
-            __type: 'header_field'
-            name
-            value
-          }
+        @header name, value  for name, value of headers
       response = new Response()
-      response[prop] = @[prop]  if @[prop]?  for prop in [
+      for prop in [
         'version'
         'status_code'
         'headers'
       ]
-      head = response.toString {hideBody: true}
-      headersIndex = head.indexOf CRLF
-      @_rawLine = head.slice 0, headersIndex
-      @_rawHeaders = head.slice headersIndex + 1
-      @push head
+        continue  unless @[prop]?
+        response[prop] = @[prop]
+      {line, headers} = response.toString {split: true}
+      @_rawLine = line
+      @_rawHeaders = headers
+      headers = CRLF + headers  if headers.length
+      @push line + headers + CRLF + CRLF
       next()
-
-
-    end: (args...) ->
-      super
-      @_socket.end()
-      @emit 'finish'

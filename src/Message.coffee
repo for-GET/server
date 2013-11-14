@@ -13,6 +13,7 @@ define [
   Transform ?= Transform8
 
   class Message extends Transform
+    _contentTransferRE: /^(content|transfer)\-(.+)/
     _rawLine: undefined
     _rawHeaders: undefined
     _socket: undefined
@@ -21,6 +22,16 @@ define [
     version: '1.1'
     headers: undefined
     representation: undefined
+    chosen: undefined
+
+
+    _expandTag: (tag) ->
+      unless @_contentTransferRE.test tag
+        if tag is 'encoding'
+          tag = "transfer-#{tag}"
+        else
+          tag = "content-#{tag}"
+      tag
 
 
     constructor: ({socket, transaction}) ->
@@ -28,12 +39,24 @@ define [
       @_socket = socket
       @_transaction = transaction
       @headers = {}
+      @chosen =
+        encoding: undefined
+        length: undefined
+        range: undefined
+        type: undefined
+        charset: undefined
+        language: undefined
 
 
     destroy: (error) ->
       @_socket?.destroy error
 
 
-    getHeader: (name) ->
+    header: (name) ->
       name = name.toLowerCase()
       @headers[name]
+
+
+    content: (tag) ->
+      tag = @_expandTag tag
+      @chosen[tag]

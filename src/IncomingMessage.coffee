@@ -67,11 +67,15 @@ define [
           else
             @_receiving = ['headers', CRLF + CRLF]
         else
-          @_rawHeaders = value
           if value?.length
+            @_rawHeaders = value
             request = new Request "#{@_rawLine}#{CRLF}#{@_rawHeaders}#{CRLF}#{CRLF}"
             for header in request.headers
-              @headers[header.name.toLowerCase()] = headerFactory header.name, header.value
+              name = header.name.toLowerCase()
+              @headers[name] = headerFactory name, header.value
+              contentField = @_contentTransferRE.exec(name)?[2]
+              @chosen[contentField] = @headers[name]  if contentField?
+
           @emit 'headers'
           @_receiving = ['body']
 
@@ -81,3 +85,8 @@ define [
       @_receiving = ['line', CRLF]
       @_buffer = new Buffer 0
       @_socket?.pipe @
+
+
+    destroy: (error) ->
+      @_socket?.unpipe @
+      super
