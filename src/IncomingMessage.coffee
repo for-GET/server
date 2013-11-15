@@ -61,7 +61,7 @@ define [
 
     _transform: (chunk, encoding, next = noop) ->
       # FIXME implement chunked encoding
-      unless chunk?.length > 1
+      if chunk.length is 1 and chunk[0] is 0x00
         @push chunk
         return next()
       maxSize = @_maxSizeLine + @_maxSizeHeaders + @_maxSizeBody
@@ -69,17 +69,22 @@ define [
         return @destroy new Error "Request is larger than #{maxSize} bytes"
 
       loop
-        if @_buffer.length
-          chunk = Buffer.concat [@_buffer, chunk], @_buffer.length + chunk.length
-          @_buffer = new Buffer 0
-
         if @_receiving is 'body'
           @push chunk
           return next()
           # FIXME always skipping trailers
 
+        if @_buffer.length
+          chunk = Buffer.concat [@_buffer, chunk], @_buffer.length + chunk.length
+          @_buffer = new Buffer 0
+
         index = BufferIndexOf.call chunk, CRLF
         if index is -1
+          switch @_receiving
+            when 'line' then if @chunk.byteLength > @_maxSizeLine
+              return @destroy new Error "Request line is larger than #{@_maxSizeLine} bytes"
+            when 'headers' then if @_rawHeaders.length + chunk.length > @_maxSizeHeaders
+              return @destroy new Error "Request headers are larger than #{@_maxSizeHeaders} bytes"
           @_buffer = chunk
           @push new Buffer ''
           return next()
@@ -91,11 +96,9 @@ define [
         switch @_receiving
           when 'line'
             @_storeLine value
-            @_buffer = chunk
           when 'headers'
             if value?.length
               @_storeHeader value
-              @_buffer = chunk
             else
               @_storeHeaders
 
