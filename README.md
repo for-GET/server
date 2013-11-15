@@ -52,5 +52,5 @@ make sample
 [Apache 2.0](LICENSE)
 
 
-  [1]: https://travis-ci.org/for-get/server
-  [2]: https://travis-ci.org/for-get/server.png
+  [1]: https://travis-ci.org/for-GET/server
+  [2]: https://travis-ci.org/for-GET/server.png
