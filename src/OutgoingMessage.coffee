@@ -95,3 +95,15 @@ define [
       headers = CRLF + headers  if headers.length
       @push line + headers + CRLF + CRLF
       next()
+
+
+    writeStatus: (args = {}, next = noop) ->
+      {status_code} = args
+      return  unless status_code?
+      return @emit 'error', new Error 'Headers are already sent'  if @_rawHeaders?
+      response = new Response()
+      response.status_code = status_code
+      {line} = response.toString {split: true}
+      line = line + CRLF
+      @push line
+      next()
