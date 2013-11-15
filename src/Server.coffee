@@ -27,13 +27,16 @@ define [
 
     _handleTransaction: ({transaction}) =>
       {request} = transaction
-      for {path, keys, handler} in @_stack
+      for {route, path, keys, handler} in @_stack
         match = path.exec request.target
         continue  if match is null
         match.shift()
         kv = {}
         kv[name] = match[index]  for {name}, index in keys
-        request.keys = kv
+        request.dispatch = {
+          keys: kv
+          route
+        }
         return handler {transaction}
 
 
@@ -72,10 +75,11 @@ define [
       @addListener 'clientError', @_clientErrorListener
 
 
-    use: (path, handler) ->
+    use: (route, handler) ->
       keys = []
-      path = @_pathRegExp path, keys
+      path = @_pathRegExp route, keys
       @_stack.push {
+        route
         path
         keys
         handler

@@ -25,6 +25,7 @@ define [
     _maxSizeLine: 1024 * 2
     _maxSizeHeaders: 1024 * 256
     _maxSizeBody: 1024 * 1024 * 10
+    dispatch: undefined
     method: undefined
     target: undefined
 
@@ -101,6 +102,9 @@ define [
 
     constructor: ({socket, transaction}) ->
       super
+      @dispatch =
+        keys: undefined
+        path: undefined
       @_receiving = 'line'
       @_buffer = new Buffer 0
       @_socket?.pipe @
@@ -117,4 +121,5 @@ define [
         @_receiving
         @method
         @target
+        @dispatch
       }
