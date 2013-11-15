@@ -20,7 +20,7 @@ define [
   #
   class IncomingMessage extends Message
     _receiving: undefined
-    _buffer: ''
+    _buffer: undefined
     # http://stackoverflow.com/questions/3326210/can-http-headers-be-too-big-for-browsers
     _maxSizeLine: 1024 * 2
     _maxSizeHeaders: 1024 * 256
