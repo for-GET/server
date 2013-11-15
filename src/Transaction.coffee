@@ -30,6 +30,6 @@ define [
     toJSON: () ->
       {
         socket: @_socket.address()
-        request: request.toJSON()
-        response: response.toJSON()
+        request: @request.toJSON()
+        response: @response.toJSON()
       }
