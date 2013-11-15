@@ -60,3 +60,15 @@ define [
     content: (tag) ->
       tag = @_expandTag tag
       @chosen[tag]
+
+
+    toJSON: () -> {
+      socket: @_socket.address()
+      @_rawLine
+      @_rawHeaders
+      @protocol
+      @version
+      headers: _.transform @headers, (result, key, value) -> result[key] = value.toString()
+      @representation
+      chosen: _.transform @chosen, (result, key, value) -> result[key] = value.toString()
+    }

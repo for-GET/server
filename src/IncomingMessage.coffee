@@ -109,3 +109,12 @@ define [
     destroy: (error) ->
       @_socket?.unpipe @
       super
+
+
+    toJSON: () ->
+      result = super
+      _.merge result, {
+        @_receiving
+        @method
+        @target
+      }

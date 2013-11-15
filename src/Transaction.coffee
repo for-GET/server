@@ -25,3 +25,11 @@ define [
       @request.destroy error  if @request?
       @response.destroy error  if @response?
       @_socket.destroy error  if @_socket?
+
+
+    toJSON: () ->
+      {
+        socket: @_socket.address()
+        request: request.toJSON()
+        response: response.toJSON()
+      }

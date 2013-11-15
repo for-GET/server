@@ -107,3 +107,10 @@ define [
       line = line + CRLF
       @push line
       next()
+
+
+    toJSON: () ->
+      result = super
+      _.merge result, {
+        @status_code
+      }
