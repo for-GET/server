@@ -2,10 +2,6 @@
 
 for-GET Server is a reference implementation of an HTTP server running the for-GET Machine.
 
-Currently it is wrapping the built-in NodeJS HTTP Server and only creates the structure of an HTTP transaction as prescribed by the for-GET Machine.
-
-In the future, this server will be standalone running on top of the NodeJS TCP Server, and use PEG parsers for requests and generators for responses.
-
 **This is part of a bigger effort: [for-GET HTTP](https://github.com/for-GET/README).**
 
 
@@ -17,7 +13,7 @@ This software is highly volatile; the v4 diagram has the same status.
 ## Usage
 
 ```bash
-npm install hyperrest-server
+npm install for-get-server
 ```
 
 ```coffee
