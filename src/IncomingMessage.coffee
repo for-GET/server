@@ -13,6 +13,8 @@ define [
   Request = api['http/Request']
   headerFactory = api['http/headers/factory']
   CRLF = '\r\n'
+  lineDelimiter = CRLF
+  headersDelimiter = CRLF + CRLF
 
   # based on https://github.com/isaacs/readable-stream
   #
@@ -27,6 +29,35 @@ define [
     target: undefined
 
 
+    _storeLine: (value) ->
+      @_rawLine = value
+      request = new Request "#{@_rawLine}#{CRLF}"
+      @[prop] = request[prop]  for prop in [
+        'version'
+        'method'
+        'target'
+      ]
+      @emit 'line', @_rawLine
+      @_receiving = 'headers'
+
+
+    _storeHeader: (value) ->
+      @_rawHeaders ?= ''
+      @_rawHeaders += value
+      @emit 'header', value
+
+
+    _storeHeaders: () ->
+      {headers} = new Request "#{@_rawLine}#{@_rawHeaders}#{CRLF}"
+      for header in headers
+        name = header.name.toLowerCase()
+        @headers[name] = headerFactory name, header.value
+        contentField = @_contentTransferRE.exec(name)?[2]
+        @chosen[contentField] = @headers[name]  if contentField?
+      @emit 'headers', @_rawHeaders
+      @_receiving = 'body'
+
+
     _transform: (chunk, encoding, next = noop) ->
       # FIXME implement chunked encoding
       unless chunk?.length > 1
@@ -37,52 +68,40 @@ define [
         return @destroy new Error "Request is larger than #{maxSize} bytes"
 
       loop
-        [stage, delimiter] = @_receiving
-        if stage is 'body'
+        if @_buffer.length
+          chunk = Buffer.concat [@_buffer, chunk], @_buffer.length + chunk.length
+          @_buffer = new Buffer 0
+
+        if @_receiving is 'body'
           @push chunk
           return next()
           # FIXME always skipping trailers
 
-        chunk = Buffer.concat [@_buffer, chunk], @_buffer.length + chunk.length
-        index = BufferIndexOf.call chunk, delimiter
+        index = BufferIndexOf.call chunk, CRLF
         if index is -1
           @_buffer = chunk
           @push new Buffer ''
           return next()
+
+        index += Buffer.byteLength CRLF
         value = chunk.slice(0, index).toString()
-        chunk = chunk.slice index + Buffer.byteLength delimiter
+        chunk = chunk.slice index
 
-        if stage is 'line'
-          @_rawLine = value
-          request = new Request "#{@_rawLine}#{CRLF}#{CRLF}"
-          @[prop] = request[prop]  for prop in [
-            'version'
-            'method'
-            'target'
-          ]
-          @emit 'line'
-          if chunk.slice(0, 2).toString() is CRLF
-            @emit 'headers'
-            @_receiving = ['body']
-          else
-            @_receiving = ['headers', CRLF + CRLF]
-        else
-          if value?.length
-            @_rawHeaders = value
-            request = new Request "#{@_rawLine}#{CRLF}#{@_rawHeaders}#{CRLF}#{CRLF}"
-            for header in request.headers
-              name = header.name.toLowerCase()
-              @headers[name] = headerFactory name, header.value
-              contentField = @_contentTransferRE.exec(name)?[2]
-              @chosen[contentField] = @headers[name]  if contentField?
-
-          @emit 'headers'
-          @_receiving = ['body']
+        switch @_receiving
+          when 'line'
+            @_storeLine value
+            @_buffer = chunk
+          when 'headers'
+            if value?.length
+              @_storeHeader value
+              @_buffer = chunk
+            else
+              @_storeHeaders
 
 
     constructor: ({socket, transaction}) ->
       super
-      @_receiving = ['line', CRLF]
+      @_receiving = 'line'
       @_buffer = new Buffer 0
       @_socket?.pipe @
 
