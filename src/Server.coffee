@@ -69,10 +69,11 @@ define [
       new RegExp '^' + path + '$', (if sensitive then '' else 'i')
 
 
-    constructor: () ->
+    constructor: (handler) ->
       @_stack = []
       @addListener 'connection', @_connectionListener
       @addListener 'clientError', @_clientErrorListener
+      @_handleTransaction = handler  if handler?
 
 
     use: (route, handler) ->
