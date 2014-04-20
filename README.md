@@ -17,7 +17,7 @@ This software is highly volatile; the v4 diagram has the same status.
 ## Usage
 
 ```bash
-npm install hyperrest-server
+npm install for-get-server
 ```
 
 ```coffee
